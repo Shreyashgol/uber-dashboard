@@ -141,18 +141,6 @@ See [`data/README.md`](data/README.md) for full schema and provenance notes.
 
 ---
 
-## Possible Extensions
-
-- [ ] Add time-series view (hourly/daily trip volume)
-- [ ] Heatmap of peak demand hours by city
-- [ ] Driver efficiency scoring (trips per hour)
-- [ ] Cohort analysis: new vs returning riders
-- [ ] Export filtered data to CSV
-- [ ] Connect to live Uber API (requires OAuth)
-- [ ] Add a Python/pandas EDA notebook in `/notebooks`
-
----
-
 ## License
 
 MIT License — see [`LICENSE`](LICENSE) for details. Dataset is synthetic and for demonstration purposes only.
