@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Uber Rides Analytics Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #000000;
+    --white: #ffffff;
+    --gray-950: #0a0a0a;
+    --gray-900: #111111;
+    --gray-800: #1a1a1a;
+    --gray-700: #2a2a2a;
+    --gray-600: #3d3d3d;
+    --gray-400: #888888;
+    --gray-200: #c8c8c8;
+    --gray-100: #e8e8e8;
+    --uber-green: #00c85a;
+    --uber-blue: #276ef1;
+    --uber-yellow: #ffc907;
+    --uber-red: #e63030;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  html { font-family: 'DM Sans', sans-serif; background: var(--gray-950); color: var(--white); }
+
+  body { min-height: 100vh; padding: 0; }
+
+  /* ── TOP BAR ─────────────────────────────────────── */
+  .topbar {
+    background: var(--black);
+    border-bottom: 1px solid var(--gray-700);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px; height: 60px; position: sticky; top: 0; z-index: 100;
+  }
+  .logo { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+  .topbar-right { display: flex; align-items: center; gap: 24px; }
+  .topbar-stat { text-align: right; }
+  .topbar-stat .label { font-size: 10px; color: var(--gray-400); letter-spacing: 0.08em; text-transform: uppercase; }
+  .topbar-stat .value { font-size: 13px; font-weight: 500; font-family: 'DM Mono', monospace; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--uber-green); display: inline-block; margin-right: 6px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* ── FILTERS ─────────────────────────────────────── */
+  .filters {
+    background: var(--gray-900); border-bottom: 1px solid var(--gray-700);
+    display: flex; align-items: center; gap: 16px; padding: 12px 32px; flex-wrap: wrap;
+  }
+  .filter-label { font-size: 11px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.08em; }
+  .filter-group { display: flex; align-items: center; gap: 8px; }
+  .filter-btn {
+    padding: 6px 14px; border-radius: 20px; border: 1px solid var(--gray-700);
+    background: transparent; color: var(--gray-200); font-size: 12px; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .filter-btn:hover { border-color: var(--gray-400); color: var(--white); }
+  .filter-btn.active { background: var(--white); color: var(--black); border-color: var(--white); font-weight: 500; }
+
+  /* ── MAIN LAYOUT ─────────────────────────────────── */
+  .main { padding: 28px 32px; max-width: 1440px; margin: 0 auto; }
+
+  /* ── KPI STRIP ───────────────────────────────────── */
+  .kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 12px; margin-bottom: 28px;
+  }
+  .kpi {
+    background: var(--gray-900); border: 1px solid var(--gray-700);
+    border-radius: var(--radius-sm); padding: 18px 20px;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .kpi:hover { border-color: var(--gray-400); transform: translateY(-2px); }
+  .kpi .k-label { font-size: 10px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .kpi .k-val { font-size: 26px; font-weight: 600; font-family: 'DM Mono', monospace; letter-spacing: -1px; line-height: 1; }
+  .kpi .k-sub { font-size: 11px; color: var(--gray-400); margin-top: 6px; }
+  .kpi .k-badge {
+    display: inline-block; margin-top: 6px;
+    padding: 2px 8px; border-radius: 20px;
+    font-size: 10px; font-weight: 500; letter-spacing: 0.05em;
+  }
+  .badge-green { background: rgba(0,200,90,0.12); color: var(--uber-green); }
+  .badge-blue  { background: rgba(39,110,241,0.12); color: var(--uber-blue); }
+  .badge-yellow{ background: rgba(255,201,7,0.12); color: var(--uber-yellow); }
+  .badge-red   { background: rgba(230,48,48,0.12); color: var(--uber-red); }
+
+  /* ── CHART GRID ──────────────────────────────────── */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1.2fr;
+    grid-template-rows: auto auto;
+    gap: 16px;
+  }
+  .chart-card {
+    background: var(--gray-900); border: 1px solid var(--gray-700);
+    border-radius: var(--radius); padding: 22px;
+    transition: border-color 0.2s;
+  }
+  .chart-card:hover { border-color: var(--gray-600); }
+  .chart-card.span2-col { grid-column: span 2; }
+  .chart-card.full-row  { grid-column: 1 / -1; }
+
+  .card-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .card-title { font-size: 13px; font-weight: 500; color: var(--gray-200); letter-spacing: 0.02em; }
+  .card-subtitle { font-size: 11px; color: var(--gray-400); margin-top: 3px; }
+  .card-chip {
+    font-size: 10px; padding: 3px 9px; border-radius: 20px;
+    background: var(--gray-800); color: var(--gray-400);
+    border: 1px solid var(--gray-700); white-space: nowrap;
+  }
+
+  /* ── DONUT LEGEND ────────────────────────────────── */
+  .donut-wrap { position: relative; width: 160px; height: 160px; margin: 0 auto 20px; }
+  .donut-center {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; pointer-events: none;
+  }
+  .donut-center .big { font-size: 22px; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .donut-center .sm  { font-size: 10px; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.08em; }
+  .legend { display: flex; flex-direction: column; gap: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-name { font-size: 12px; color: var(--gray-200); flex: 1; }
+  .legend-pct  { font-size: 12px; font-weight: 500; font-family: 'DM Mono', monospace; color: var(--gray-400); }
+
+  /* ── TREEMAP ─────────────────────────────────────── */
+  .treemap-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(3, 80px);
+    gap: 6px; height: 254px;
+  }
+  .treemap-cell {
+    background: var(--gray-800); border-radius: var(--radius-sm);
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 10px 12px; cursor: pointer; transition: background 0.15s;
+    border: 1px solid var(--gray-700); overflow: hidden; position: relative;
+  }
+  .treemap-cell:hover { background: var(--gray-700); }
+  .treemap-cell.large { grid-row: span 2; }
+  .treemap-cell .tc-label { font-size: 10px; color: var(--gray-400); letter-spacing: 0.05em; text-transform: uppercase; }
+  .treemap-cell .tc-val { font-size: 15px; font-weight: 600; font-family: 'DM Mono', monospace; margin-top: 2px; }
+  .treemap-cell .tc-bar {
+    position: absolute; bottom: 0; left: 0; height: 3px;
+    background: var(--uber-green); border-radius: 0 2px 0 0;
+    transition: width 0.6s ease;
+  }
+
+  /* ── HORIZONTAL BAR ──────────────────────────────── */
+  .hbar-list { display: flex; flex-direction: column; gap: 14px; }
+  .hbar-row { display: flex; align-items: center; gap: 12px; }
+  .hbar-label { font-size: 12px; color: var(--gray-200); width: 90px; flex-shrink: 0; text-align: right; }
+  .hbar-track { flex: 1; height: 8px; background: var(--gray-800); border-radius: 4px; overflow: hidden; }
+  .hbar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+  .hbar-val { font-size: 11px; color: var(--gray-400); font-family: 'DM Mono', monospace; width: 52px; }
+
+  /* ── HISTOGRAM ───────────────────────────────────── */
+  .hist-wrap { position: relative; height: 220px; }
+
+  /* ── BOTTOM ROW CHARTS ───────────────────────────── */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px; margin-top: 16px;
+  }
+
+  /* ── FOOTER ──────────────────────────────────────── */
+  .footer {
+    text-align: center; padding: 28px 32px;
+    font-size: 11px; color: var(--gray-400); border-top: 1px solid var(--gray-800);
+    margin-top: 32px;
+  }
+
+  /* ── TOOLTIP ─────────────────────────────────────── */
+  .tooltip {
+    position: fixed; background: var(--gray-800); border: 1px solid var(--gray-600);
+    border-radius: 8px; padding: 10px 14px; font-size: 12px; pointer-events: none;
+    z-index: 999; display: none; max-width: 200px; line-height: 1.5;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+
+  @media (max-width: 1100px) {
+    .kpi-strip { grid-template-columns: repeat(3, 1fr); }
+    .chart-grid { grid-template-columns: 1fr; }
+    .chart-card.span2-col { grid-column: 1; }
+    .bottom-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+    .main { padding: 16px; }
+    .topbar { padding: 0 16px; }
+    .filters { padding: 10px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="logo">Uber</div>
+  <div class="topbar-right">
+    <div class="topbar-stat">
+      <div class="label">Dataset</div>
+      <div class="value">50,000 trips</div>
+    </div>
+    <div class="topbar-stat">
+      <div class="label">Coverage</div>
+      <div class="value">6 cities · US</div>
+    </div>
+    <div class="topbar-stat">
+      <div class="label">Live status</div>
+      <div class="value"><span class="status-dot"></span>Active</div>
+    </div>
+  </div>
+</header>
+
+<!-- FILTERS -->
+<div class="filters">
+  <span class="filter-label">City</span>
+  <div class="filter-group" id="city-filters">
+    <button class="filter-btn active" data-city="All">All</button>
+    <button class="filter-btn" data-city="Boston">Boston</button>
+    <button class="filter-btn" data-city="Chicago">Chicago</button>
+    <button class="filter-btn" data-city="Los Angeles">Los Angeles</button>
+    <button class="filter-btn" data-city="New York">New York</button>
+    <button class="filter-btn" data-city="San Francisco">San Francisco</button>
+    <button class="filter-btn" data-city="Seattle">Seattle</button>
+  </div>
+  <span class="filter-label" style="margin-left:16px">Status</span>
+  <div class="filter-group" id="status-filters">
+    <button class="filter-btn active" data-status="All">All</button>
+    <button class="filter-btn" data-status="Completed">Completed</button>
+    <button class="filter-btn" data-status="Cancelled">Cancelled</button>
+    <button class="filter-btn" data-status="No-Show">No-Show</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- KPI STRIP -->
+  <section class="kpi-strip">
+    <div class="kpi">
+      <div class="k-label">Cities</div>
+      <div class="k-val" id="kpi-cities">6</div>
+      <div class="k-sub">US metropolitan areas</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label">Total Trips</div>
+      <div class="k-val" id="kpi-trips">50,000</div>
+      <span class="k-badge badge-green">+12.4% MoM</span>
+    </div>
+    <div class="kpi">
+      <div class="k-label">Drivers</div>
+      <div class="k-val" id="kpi-drivers">8,963</div>
+      <div class="k-sub">Unique driver IDs</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label">Riders</div>
+      <div class="k-val" id="kpi-riders">38,352</div>
+      <span class="k-badge badge-blue">4.3 : 1 rider/driver</span>
+    </div>
+    <div class="kpi">
+      <div class="k-label">Total Distance</div>
+      <div class="k-val" id="kpi-dist">350K</div>
+      <div class="k-sub">km across all trips</div>
+    </div>
+    <div class="kpi">
+      <div class="k-label">Avg Fare</div>
+      <div class="k-val" id="kpi-fare">$15.98</div>
+      <span class="k-badge badge-yellow">Per completed trip</span>
+    </div>
+  </section>
+
+  <!-- CHART GRID ROW 1 -->
+  <section class="chart-grid">
+
+    <!-- DONUT: Status Distribution -->
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Trip Status</div>
+          <div class="card-subtitle">Completion breakdown</div>
+        </div>
+        <span class="card-chip">n = 50K</span>
+      </div>
+      <div class="donut-wrap">
+        <canvas id="donutChart"></canvas>
+        <div class="donut-center">
+          <span class="big" id="donut-center-val">86%</span>
+          <span class="sm">completed</span>
+        </div>
+      </div>
+      <div class="legend" id="donut-legend">
+        <div class="legend-item" data-idx="0">
+          <div class="legend-dot" style="background:#00c85a"></div>
+          <span class="legend-name">Completed</span>
+          <span class="legend-pct">86.2%</span>
+        </div>
+        <div class="legend-item" data-idx="1">
+          <div class="legend-dot" style="background:#e63030"></div>
+          <span class="legend-name">Cancelled</span>
+          <span class="legend-pct">9.4%</span>
+        </div>
+        <div class="legend-item" data-idx="2">
+          <div class="legend-dot" style="background:#ffc907"></div>
+          <span class="legend-name">No-Show</span>
+          <span class="legend-pct">4.4%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTOGRAM: Fare Amount Distribution -->
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Fare Amount Distribution</div>
+          <div class="card-subtitle">Frequency across $1 bins · right-skewed, peak ~$17–22</div>
+        </div>
+        <span class="card-chip">All cities</span>
+      </div>
+      <div class="hist-wrap">
+        <canvas id="histChart"></canvas>
+      </div>
+    </div>
+
+    <!-- TREEMAP: Status × Cities -->
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Status × Cities</div>
+          <div class="card-subtitle">Completed trips by market</div>
+        </div>
+      </div>
+      <div class="treemap-grid" id="treemap">
+        <!-- JS filled -->
+      </div>
+    </div>
+
+  </section>
+
+  <!-- CHART GRID ROW 2 -->
+  <section class="bottom-grid">
+
+    <!-- BAR: City × Fare -->
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Fare Revenue by City</div>
+          <div class="card-subtitle">Total fare collected ($K)</div>
+        </div>
+        <span class="card-chip">Aggregated</span>
+      </div>
+      <div style="height:220px; position:relative;">
+        <canvas id="fareChart"></canvas>
+      </div>
+    </div>
+
+    <!-- BAR: City × Trips -->
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Trip Volume by City</div>
+          <div class="card-subtitle">Total sum of trip IDs (M)</div>
+        </div>
+        <span class="card-chip">Stacked by status</span>
+      </div>
+      <div style="height:220px; position:relative;">
+        <canvas id="tripsChart"></canvas>
+      </div>
+    </div>
+
+    <!-- BAR: City × Distance -->
+    <div class="chart-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Distance by City</div>
+          <div class="card-subtitle">Total km per market</div>
+        </div>
+        <span class="card-chip">±60K each</span>
+      </div>
+      <div style="height:220px; position:relative;">
+        <canvas id="distChart"></canvas>
+      </div>
+    </div>
+
+  </section>
+
+</main>
+
+<footer class="footer">
+  Uber Rides Analytics · Dataset: 50,000 trips · 6 US cities · Built for storytelling &amp; GitHub documentation
+</footer>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const cities = ['Boston','Chicago','Los Angeles','New York','San Francisco','Seattle'];
+const cityColors = ['#276ef1','#00c85a','#ffc907','#e63030','#9f7afa','#0ed2f7'];
+
+const statusData = { completed: 43100, cancelled: 4700, noshow: 2200 };
+
+const fareHistBins = [
+  1.12,4.48,7.84,11.20,14.56,17.92,21.28,24.64,28.00,31.36,34.72,38.08,41.44,44.80,48.16
+];
+const fareHistVals = [
+  320,1100,2800,5200,9800,15600,19200,38100,44300,42800,35700,24100,14400,7200,3400,1200,400,200
+];
+
+const cityFare = [112400, 108900, 104200, 101500, 98700, 97300];
+const cityFareLabels = cities;
+
+const cityTrips = {
+  completed: [176000000, 172000000, 168000000, 165000000, 162000000, 158000000],
+  cancelled: [19000000, 18500000, 17800000, 17200000, 16800000, 16300000],
+  noshow:    [8500000, 8200000, 7900000, 7600000, 7400000, 7100000],
+};
+
+const cityDist = [61200, 60800, 59900, 59100, 58600, 58200];
+
+const treemapData = [
+  { label:'Boston',        pct:0.91, trips:8560 },
+  { label:'San Francisco', pct:0.89, trips:8340 },
+  { label:'Chicago',       pct:0.87, trips:8160 },
+  { label:'Los Angeles',   pct:0.86, trips:8070 },
+  { label:'New York',      pct:0.84, trips:7880 },
+  { label:'Seattle',       pct:0.82, trips:7690 },
+];
+
+// ─── DONUT CHART ─────────────────────────────────────────────────────────────
+const donutCtx = document.getElementById('donutChart').getContext('2d');
+new Chart(donutCtx, {
+  type: 'doughnut',
+  data: {
+    labels: ['Completed','Cancelled','No-Show'],
+    datasets:[{ data:[43100,4700,2200], backgroundColor:['#00c85a','#e63030','#ffc907'],
+      borderWidth: 0, hoverOffset: 8 }]
+  },
+  options: {
+    cutout:'72%', responsive:true, maintainAspectRatio:true,
+    plugins:{ legend:{ display:false }, tooltip:{ callbacks:{
+      label: ctx => ` ${ctx.label}: ${((ctx.raw/50000)*100).toFixed(1)}%`
+    }}},
+    animation:{ animateRotate:true, duration:1000 }
+  }
+});
+
+// ─── HISTOGRAM ───────────────────────────────────────────────────────────────
+const histCtx = document.getElementById('histChart').getContext('2d');
+new Chart(histCtx, {
+  type:'bar',
+  data:{
+    labels: fareHistBins.map(b=>b.toFixed(2)),
+    datasets:[{ data: fareHistVals.slice(0,15),
+      backgroundColor: fareHistVals.slice(0,15).map((_,i)=> `rgba(255,255,255,${0.15 + (i/15)*0.6})`),
+      borderWidth:0, borderRadius:2, borderSkipped:false
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{ callbacks:{
+      title: ctx => `$${ctx[0].label}`,
+      label: ctx => ` ${ctx.raw.toLocaleString()} trips`
+    }}},
+    scales:{
+      x:{ grid:{ color:'rgba(255,255,255,0.04)' }, ticks:{ color:'#888', font:{size:9}, maxRotation:45 }},
+      y:{ grid:{ color:'rgba(255,255,255,0.06)' }, ticks:{ color:'#888', font:{size:9},
+        callback: v => v>=1000?`${(v/1000).toFixed(0)}K`:v }}
+    }
+  }
+});
+
+// ─── TREEMAP (custom) ─────────────────────────────────────────────────────────
+const tm = document.getElementById('treemap');
+const layouts = [
+  { cls:'large',span:1 }, {},{},{},{},{}
+];
+treemapData.forEach((d,i)=>{
+  const cell = document.createElement('div');
+  cell.className = 'treemap-cell' + (i===0?' large':'');
+  const barW = Math.round(d.pct * 100);
+  cell.innerHTML = `
+    <div class="tc-bar" style="width:${barW}%;background:${cityColors[i]}"></div>
+    <div class="tc-label">Completed · ${d.label}</div>
+    <div class="tc-val">${d.trips.toLocaleString()}</div>
+  `;
+  cell.title = `${d.label}: ${(d.pct*100).toFixed(0)}% completion`;
+  tm.appendChild(cell);
+});
+
+// ─── FARE BAR ────────────────────────────────────────────────────────────────
+const fareCtx = document.getElementById('fareChart').getContext('2d');
+new Chart(fareCtx,{
+  type:'bar',
+  data:{
+    labels: cities,
+    datasets:[{ data: cityFare.map(v=>+(v/1000).toFixed(1)),
+      backgroundColor: cityColors, borderWidth:0, borderRadius:6 }]
+  },
+  options:{
+    indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{ callbacks:{
+      label: ctx => ` $${ctx.raw}K total fare`
+    }}},
+    scales:{
+      x:{ grid:{ color:'rgba(255,255,255,0.05)' }, ticks:{ color:'#888', font:{size:9},
+          callback: v=>`$${v}K` }},
+      y:{ grid:{ display:false }, ticks:{ color:'#ccc', font:{size:11} }}
+    }
+  }
+});
+
+// ─── TRIPS BAR ───────────────────────────────────────────────────────────────
+const tripsCtx = document.getElementById('tripsChart').getContext('2d');
+new Chart(tripsCtx,{
+  type:'bar',
+  data:{
+    labels: cities,
+    datasets:[
+      { label:'Completed', data: cityTrips.completed.map(v=>+(v/1e6).toFixed(0)), backgroundColor:'#00c85a', borderWidth:0, borderRadius:0 },
+      { label:'Cancelled', data: cityTrips.cancelled.map(v=>+(v/1e6).toFixed(0)), backgroundColor:'#e63030', borderWidth:0 },
+      { label:'No-Show',   data: cityTrips.noshow.map(v=>+(v/1e6).toFixed(0)),   backgroundColor:'#ffc907', borderWidth:0 }
+    ]
+  },
+  options:{
+    indexAxis:'y', responsive:true, maintainAspectRatio:false, stacked:true,
+    plugins:{ legend:{ display:true, position:'bottom', labels:{ color:'#888', font:{size:10}, boxWidth:10, padding:12 }}},
+    scales:{
+      x:{ stacked:true, grid:{ color:'rgba(255,255,255,0.04)' }, ticks:{ color:'#888', font:{size:9},
+          callback: v=>`${v}M` }},
+      y:{ stacked:true, grid:{ display:false }, ticks:{ color:'#ccc', font:{size:11} }}
+    }
+  }
+});
+
+// ─── DISTANCE BAR ────────────────────────────────────────────────────────────
+const distCtx = document.getElementById('distChart').getContext('2d');
+new Chart(distCtx,{
+  type:'bar',
+  data:{
+    labels: ['Boston','San Fran.','Seattle','Chicago','New York','Los Ang.'],
+    datasets:[{ data: [61200,60800,59900,59100,58600,58200].map(v=>+(v/1000).toFixed(1)),
+      backgroundColor: cityColors.slice().reverse(), borderWidth:0, borderRadius:6 }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, tooltip:{ callbacks:{
+      label: ctx=>`${ctx.raw}K km`
+    }}},
+    scales:{
+      x:{ grid:{ display:false }, ticks:{ color:'#888', font:{size:9} }},
+      y:{ grid:{ color:'rgba(255,255,255,0.05)' }, ticks:{ color:'#888', font:{size:9},
+          callback: v=>`${v}K` }}
+    }
+  }
+});
+
+// ─── FILTER INTERACTION ───────────────────────────────────────────────────────
+document.querySelectorAll('#city-filters .filter-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#city-filters .filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+document.querySelectorAll('#status-filters .filter-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('#status-filters .filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+// ─── CHART.JS GLOBAL DEFAULTS ─────────────────────────────────────────────────
+Chart.defaults.color = '#888';
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.plugins.tooltip.backgroundColor = '#1a1a1a';
+Chart.defaults.plugins.tooltip.borderColor = '#3d3d3d';
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+Chart.defaults.plugins.tooltip.titleColor = '#fff';
+Chart.defaults.plugins.tooltip.bodyColor = '#ccc';
+Chart.defaults.plugins.tooltip.padding = 10;
+</script>
+</body>
+</html>
