@@ -1,10 +1,10 @@
-# 🚖 Uber Rides Analytics Dashboard
+# Uber Rides Analytics Dashboard
 
 > **A data storytelling project** — turning 50,000 raw trip records into operational intelligence across 6 US cities.
 
 ---
 
-## 📖 The Story Behind the Data
+## The Story Behind the Data
 
 Every ride hailed on Uber leaves a breadcrumb: a driver, a rider, a city, a fare, a distance — and a final status. *Did the trip complete? Did a rider cancel? Did a driver simply not show?*
 
@@ -19,7 +19,7 @@ The dashboard you'll find here is the answer.
 
 ---
 
-## 🗂️ Repository Structure
+## Repository Structure
 
 ```
 uber-dashboard-analysis/
@@ -44,7 +44,7 @@ uber-dashboard-analysis/
 
 ---
 
-## 📊 Dashboard Overview
+## Dashboard Overview
 
 ![alt text](image.png)
 
@@ -52,12 +52,12 @@ uber-dashboard-analysis/
 
 | Metric | Value | Insight |
 |--------|-------|---------|
-| 🏙️ Cities | 6 | Boston, Chicago, Los Angeles, New York, San Francisco, Seattle |
-| 🚗 Trips | 50,000 | Full dataset, all statuses included |
-| 👤 Drivers | 8,963 | Unique driver IDs — 5.6 trips/driver average |
-| 🧑‍💼 Riders | 38,352 | Unique rider IDs — 4.3:1 rider-to-driver ratio |
-| 📏 Distance | 350,404 km | Total across all completed trips |
-| 💰 Avg Fare | $15.98 | Per completed trip — healthy mid-market position |
+| Cities | 6 | Boston, Chicago, Los Angeles, New York, San Francisco, Seattle |
+| Trips | 50,000 | Full dataset, all statuses included |
+| Drivers | 8,963 | Unique driver IDs — 5.6 trips/driver average |
+| Riders | 38,352 | Unique rider IDs — 4.3:1 rider-to-driver ratio |
+| Distance | 350,404 km | Total across all completed trips |
+| Avg Fare | $15.98 | Per completed trip — healthy mid-market position |
 
 ### Charts Included
 
@@ -72,7 +72,7 @@ uber-dashboard-analysis/
 
 ---
 
-## 🔍 Key Findings & Data Story
+## Key Findings & Data Story
 
 ### Finding 1 — The Completion Rate Story
 
@@ -121,7 +121,7 @@ The **completion rate by city** (treemap) is where real differentiation emerges:
 
 ---
 
-## 🚀 How to Use This Repo
+## How to Use This Repo
 
 ### View the Dashboard Locally
 
@@ -138,32 +138,8 @@ start dashboard/index.html
 
 No server required — the dashboard is pure HTML/CSS/JS with Chart.js loaded from CDN.
 
-### Deploy to GitHub Pages
 
-1. Push this repo to GitHub
-2. Go to **Settings → Pages**
-3. Set source to `main` branch, `/dashboard` folder
-4. Your dashboard will be live at `https://YOUR_USERNAME.github.io/uber-dashboard-analysis/`
-
-Alternatively, the included `.github/workflows/pages.yml` automates this on every push to `main`.
-
----
-
-## 📐 Technical Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Visualisation | [Chart.js 4.4](https://www.chartjs.org/) — CDN loaded |
-| Styling | Pure CSS with CSS custom properties (no framework) |
-| Fonts | DM Sans + DM Mono via Google Fonts |
-| Interactivity | Vanilla JavaScript |
-| Deploy | GitHub Pages |
-
-No build step. No npm. No bundler. Open the file and it works.
-
----
-
-## 📁 Data Notes
+## Data Notes
 
 The dataset represents a **synthetic sample** modelled after real Uber operational patterns:
 
@@ -176,7 +152,7 @@ See [`data/README.md`](data/README.md) for full schema and provenance notes.
 
 ---
 
-## 🔮 Possible Extensions
+## Possible Extensions
 
 - [ ] Add time-series view (hourly/daily trip volume)
 - [ ] Heatmap of peak demand hours by city
@@ -188,10 +164,8 @@ See [`data/README.md`](data/README.md) for full schema and provenance notes.
 
 ---
 
-## 📄 License
+## License
 
 MIT License — see [`LICENSE`](LICENSE) for details. Dataset is synthetic and for demonstration purposes only.
 
 ---
-
-*Built as a data storytelling and portfolio project. Not affiliated with or endorsed by Uber Technologies, Inc.*
