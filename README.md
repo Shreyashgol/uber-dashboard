@@ -22,24 +22,13 @@ The dashboard you'll find here is the answer.
 ## Repository Structure
 
 ```
-uber-dashboard-analysis/
+uber-dashboard/
 │
-├── dashboard/
-│   └── index.html          # ← Interactive dashboard (open in browser)
-│
-├── docs/
-│   ├── KPI_DEFINITIONS.md  # Business metric glossary
-│   ├── DATA_DICTIONARY.md  # Field-level schema documentation
-│   └── ANALYSIS_NOTES.md   # Analyst commentary & findings
-│
-├── data/
-│   └── README.md           # Dataset provenance & structure notes
-│
-├── .github/
-│   └── workflows/
-│       └── pages.yml       # GitHub Pages auto-deploy workflow
-│
-└── README.md               # ← You are here
+├── index.html # ← Interactive dashboard (open in browser)
+├── kpi_definitions.md # Business metric glossary
+├── data_dictionary.md  # Field-level schema documentation       
+├── analysis.md # Analyst commentary & findings
+└── README.md              
 ```
 
 ---
