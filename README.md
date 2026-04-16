@@ -1,4 +1,4 @@
-# Uber Rides Analytics Dashboard
+# Uber Rides Analytics Dashboard using Tableau
 
 > **A data storytelling project** — turning 50,000 raw trip records into operational intelligence across 6 US cities.
 
